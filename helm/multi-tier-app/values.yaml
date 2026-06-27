@@ -1,0 +1,79 @@
+# Default values for the umbrella chart.
+# Sub-chart values are overridden under their chart name key.
+
+frontend:
+  replicaCount: 2
+  image:
+    repository: nginx
+    tag: "1.25-alpine"
+  service:
+    type: ClusterIP
+    port: 80
+  ingress:
+    enabled: true
+    className: nginx
+    hosts:
+      - host: app.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+
+backend:
+  replicaCount: 2
+  image:
+    repository: python
+    tag: "3.12-slim"
+  service:
+    type: ClusterIP
+    port: 8000
+  config:
+    databaseHost: "multi-tier-app-database"
+    databasePort: "5432"
+    databaseName: "appdb"
+    logLevel: "info"
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+
+database:
+  replicaCount: 1
+  image:
+    repository: postgres
+    tag: "16-alpine"
+  service:
+    port: 5432
+  storage:
+    size: 10Gi
+    storageClassName: managed-premium
+  credentials:
+    postgresUser: appuser
+    postgresPassword: changeme-use-external-secrets
+    postgresDb: appdb
+  resources:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi

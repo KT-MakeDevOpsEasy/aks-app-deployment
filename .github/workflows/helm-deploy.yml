@@ -1,0 +1,167 @@
+name: "Helm - Deploy Application"
+
+on:
+  pull_request:
+    branches: [dev, main]
+    paths:
+      - "helm/**"
+  push:
+    branches: [dev, main]
+    paths:
+      - "helm/**"
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        type: choice
+        options:
+          - dev
+          - prod
+      action:
+        description: "Action to perform"
+        required: true
+        type: choice
+        options:
+          - install
+          - upgrade
+          - rollback
+      chart_version:
+        description: "Chart version (for rollback, specify revision number)"
+        required: false
+        default: ""
+
+env:
+  HELM_VERSION: "3.14.0"
+  CHART_PATH: helm/multi-tier-app
+
+jobs:
+  lint:
+    name: "Lint Helm Charts"
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      - name: Helm Dependency Update
+        run: helm dependency update ${{ env.CHART_PATH }}
+
+      - name: Helm Lint (dev)
+        run: helm lint ${{ env.CHART_PATH }} -f ${{ env.CHART_PATH }}/values-dev.yaml
+
+      - name: Helm Lint (prod)
+        run: helm lint ${{ env.CHART_PATH }} -f ${{ env.CHART_PATH }}/values-prod.yaml
+
+      - name: Helm Template (dry-run)
+        run: helm template multi-tier-app ${{ env.CHART_PATH }} -f ${{ env.CHART_PATH }}/values-dev.yaml
+
+  deploy-dev:
+    name: "Deploy to dev"
+    runs-on: ubuntu-latest
+    if: (github.ref == 'refs/heads/dev' && github.event_name == 'push') || (github.event_name == 'workflow_dispatch' && inputs.environment == 'dev')
+    environment: dev
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      - name: Get AKS Credentials
+        run: |
+          az aks get-credentials \
+            --resource-group ${{ secrets.AKS_RESOURCE_GROUP }} \
+            --name ${{ secrets.AKS_CLUSTER_NAME }}
+
+      - name: Helm Dependency Update
+        run: helm dependency update ${{ env.CHART_PATH }}
+
+      - name: Deploy (install/upgrade)
+        if: github.event_name == 'push' || inputs.action != 'rollback'
+        run: |
+          helm upgrade --install multi-tier-app ${{ env.CHART_PATH }} \
+            --namespace app-dev \
+            --create-namespace \
+            --values ${{ env.CHART_PATH }}/values-dev.yaml \
+            --wait \
+            --timeout 10m \
+            --atomic
+
+      - name: Rollback
+        if: github.event_name == 'workflow_dispatch' && inputs.action == 'rollback'
+        run: |
+          REVISION="${{ inputs.chart_version }}"
+          if [ -z "$REVISION" ]; then
+            helm rollback multi-tier-app --namespace app-dev --wait
+          else
+            helm rollback multi-tier-app "$REVISION" --namespace app-dev --wait
+          fi
+
+      - name: Verify Deployment
+        run: |
+          kubectl get pods -n app-dev
+          helm status multi-tier-app -n app-dev
+
+  deploy-prod:
+    name: "Deploy to prod"
+    runs-on: ubuntu-latest
+    if: (github.ref == 'refs/heads/main' && github.event_name == 'push') || (github.event_name == 'workflow_dispatch' && inputs.environment == 'prod')
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      - name: Get AKS Credentials
+        run: |
+          az aks get-credentials \
+            --resource-group ${{ secrets.AKS_RESOURCE_GROUP }} \
+            --name ${{ secrets.AKS_CLUSTER_NAME }}
+
+      - name: Helm Dependency Update
+        run: helm dependency update ${{ env.CHART_PATH }}
+
+      - name: Deploy (install/upgrade)
+        if: github.event_name == 'push' || inputs.action != 'rollback'
+        run: |
+          helm upgrade --install multi-tier-app ${{ env.CHART_PATH }} \
+            --namespace app-prod \
+            --create-namespace \
+            --values ${{ env.CHART_PATH }}/values-prod.yaml \
+            --wait \
+            --timeout 10m \
+            --atomic
+
+      - name: Rollback
+        if: github.event_name == 'workflow_dispatch' && inputs.action == 'rollback'
+        run: |
+          REVISION="${{ inputs.chart_version }}"
+          if [ -z "$REVISION" ]; then
+            helm rollback multi-tier-app --namespace app-prod --wait
+          else
+            helm rollback multi-tier-app "$REVISION" --namespace app-prod --wait
+          fi
+
+      - name: Verify Deployment
+        run: |
+          kubectl get pods -n app-prod
+          helm status multi-tier-app -n app-prod
