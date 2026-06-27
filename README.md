@@ -78,3 +78,4 @@ helm rollback multi-tier-app --namespace app-dev
 
 - [azure-challenges](https://github.com/KT-MakeDevOpsEasy/azure-challenges) — Challenge deployments (VNET + AKS)
 - [aks-platform-config](https://github.com/KT-MakeDevOpsEasy/aks-platform-config) — Security policies and OPA
+- [helm-ingress-nginx](https://github.com/KT-MakeDevOpsEasy/helm-ingress-nginx) — NGINX Ingress controller (used by app Ingress resources)
