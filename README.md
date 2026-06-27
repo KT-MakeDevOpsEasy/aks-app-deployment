@@ -76,5 +76,5 @@ helm rollback multi-tier-app --namespace app-dev
 
 ## Related Repos
 
-- [terraform-aks-deployment](https://github.com/KT-MakeDevOpsEasy/terraform-azure-aks-deployment) — AKS infrastructure
+- [azure-challenges](https://github.com/KT-MakeDevOpsEasy/azure-challenges) — Challenge deployments (VNET + AKS)
 - [aks-platform-config](https://github.com/KT-MakeDevOpsEasy/aks-platform-config) — Security policies and OPA
