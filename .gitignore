@@ -1,4 +1,4 @@
-charts/*.tgz
+*.tgz
 Chart.lock
 .DS_Store
 Thumbs.db
