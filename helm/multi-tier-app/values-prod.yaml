@@ -29,6 +29,8 @@ backend:
   replicaCount: 3
   config:
     logLevel: "warn"
+  externalSecrets:
+    enabled: true
   resources:
     requests:
       cpu: 500m
@@ -46,6 +48,8 @@ database:
   storage:
     size: 50Gi
     storageClassName: managed-premium
+  externalSecrets:
+    enabled: true
   resources:
     requests:
       cpu: 500m

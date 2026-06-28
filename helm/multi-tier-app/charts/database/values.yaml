@@ -28,6 +28,15 @@ resources:
 nodeSelector: {}
 tolerations: []
 
+externalSecrets:
+  enabled: false
+  storeName: azure-keyvault
+  refreshInterval: 1h
+  keys:
+    postgresUser: db-user
+    postgresPassword: db-password
+    postgresDb: db-name
+
 backup:
   enabled: false
   schedule: "0 2 * * *"

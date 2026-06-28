@@ -29,5 +29,13 @@ autoscaling:
   maxReplicas: 10
   targetCPUUtilizationPercentage: 70
 
+externalSecrets:
+  enabled: false
+  storeName: azure-keyvault
+  refreshInterval: 1h
+  keys:
+    databaseUser: db-user
+    databasePassword: db-password
+
 nodeSelector: {}
 tolerations: []
