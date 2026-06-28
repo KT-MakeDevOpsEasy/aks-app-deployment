@@ -9,12 +9,14 @@ service:
   type: ClusterIP
   port: 80
 
-ingress:
+gateway:
   enabled: false
-  className: nginx
+  className: cilium
+  hostname: ""
   annotations: {}
-  hosts: []
-  tls: []
+  tls:
+    enabled: false
+    secretName: ""
 
 resources:
   requests:

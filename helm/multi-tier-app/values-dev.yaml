@@ -2,12 +2,10 @@
 
 frontend:
   replicaCount: 1
-  ingress:
-    hosts:
-      - host: app.dev.example.com
-        paths:
-          - path: /
-            pathType: Prefix
+  gateway:
+    enabled: true
+    className: cilium
+    hostname: app.dev.example.com
   resources:
     requests:
       cpu: 50m

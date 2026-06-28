@@ -9,14 +9,10 @@ frontend:
   service:
     type: ClusterIP
     port: 80
-  ingress:
+  gateway:
     enabled: true
-    className: nginx
-    hosts:
-      - host: app.example.com
-        paths:
-          - path: /
-            pathType: Prefix
+    className: cilium
+    hostname: app.example.com
   resources:
     requests:
       cpu: 100m

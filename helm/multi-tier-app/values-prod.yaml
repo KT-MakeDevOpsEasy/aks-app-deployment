@@ -2,16 +2,13 @@
 
 frontend:
   replicaCount: 3
-  ingress:
-    hosts:
-      - host: app.example.com
-        paths:
-          - path: /
-            pathType: Prefix
+  gateway:
+    enabled: true
+    className: cilium
+    hostname: app.example.com
     tls:
-      - secretName: app-tls
-        hosts:
-          - app.example.com
+      enabled: true
+      secretName: app-tls
   resources:
     requests:
       cpu: 200m
